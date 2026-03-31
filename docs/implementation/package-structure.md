@@ -10,6 +10,7 @@ src/pyodt1/
   rng.py
   solver.py
   state.py
+  statistics.py
   triplet.py
 ```
 
@@ -22,4 +23,5 @@ src/pyodt1/
 - `acceptance.py` — acceptance probability
 - `triplet.py` — triplet map and `c*K` increment
 - `state.py` — state container
-- `solver.py` — one-step sampling, accepted-eddy application, `BLowerdt` / `BRaisedt` logic, and realization runners including `nstat` / `ntseg` scheduling
+- `statistics.py` — `BStats`-style accumulation, `BSeries`-style centerline moments, and `BWriteSeries`-style postprocessing helpers
+- `solver.py` — one-step sampling, accepted-eddy application, `BLowerdt` / `BRaisedt` logic, realization runners including `nstat` / `ntseg` scheduling, and repeated-iteration aggregation

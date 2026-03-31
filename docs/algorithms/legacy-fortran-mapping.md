@@ -24,10 +24,14 @@ Primary upstream reference:
 | `BTriplet.f` | `pyodt1.triplet.triplet_map()` |
 | `BAddK.f` | `pyodt1.triplet.add_k()` |
 | `BEddy.f` | `pyodt1.solver.OdtSolver.apply_eddy()` |
+| `BStats.f` | `pyodt1.statistics.accumulate_cstats()` |
+| `BSeries.f` | `pyodt1.statistics.accumulate_series()` |
+| `BWriteSeries.f` | `pyodt1.statistics.finalize_series_variance()`, `pyodt1.statistics.write_series_text()` |
 | `BLowerdt.f` | `pyodt1.solver.OdtSolver.lower_dt()` |
 | `BRaisedt.f` | `pyodt1.solver.OdtSolver.raise_dt()` |
 | simple realization scheduling in `Bodt.f` | `pyodt1.solver.OdtSolver.run_realization()` |
 | `nstat` / `ntseg` sub-interval scheduling in `Bodt.f` | `pyodt1.solver.OdtSolver.run_scheduled_realization()` |
+| repeated realization / series aggregation path in `Bodt.f` | `pyodt1.solver.OdtSolver.run_iterations()` |
 
 ## Notes
 

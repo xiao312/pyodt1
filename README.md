@@ -60,8 +60,10 @@ source .venv/bin/activate
 python scripts/compare_one_step.py
 python scripts/compare_advance.py
 python scripts/compare_multi_trial.py
+python scripts/compare_iterations.py
 ```
 
 - `compare_one_step.py` covers the core sampled/accepted eddy path.
 - `compare_advance.py` covers deterministic advancement, initialization, and exponential waiting-time sampling.
 - `compare_multi_trial.py` covers `BLowerdt` and a reduced multi-trial `Bodt`-style scheduled realization.
+- `compare_iterations.py` covers repeated realizations plus simplified `BStats` / `BSeries` / `BWriteSeries`-style behavior.

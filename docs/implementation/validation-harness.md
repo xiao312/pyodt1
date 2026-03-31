@@ -5,6 +5,7 @@ The main comparison tools are:
 - `scripts/compare_one_step.py`
 - `scripts/compare_advance.py`
 - `scripts/compare_multi_trial.py`
+- `scripts/compare_iterations.py`
 
 This script is central to the project because it turns the reimplementation effort from a qualitative translation exercise into a quantitative validation workflow.
 
@@ -64,12 +65,23 @@ This is especially valuable because it shows that Python is not merely reproduci
 - centerline series accumulation via the `BSeries`-style path
 - final state and RNG state after a reduced multi-trial realization
 
+## 5. Repeated realizations and simplified statistics/output paths
+
+`compare_iterations.py` compares Python and Fortran for:
+
+- repeated `niter`-level scheduled realizations
+- `BStats`-style `cstat` accumulation
+- `BSeries` aggregation across realizations
+- `BWriteSeries` time/variance output for the centerline series
+- final RNG state after multiple realizations
+
 ## Usage
 
 ```bash
 python scripts/compare_one_step.py
 python scripts/compare_advance.py
 python scripts/compare_multi_trial.py
+python scripts/compare_iterations.py
 ```
 
 ## Behavior with and without Fortran

@@ -126,8 +126,35 @@ def test_run_scheduled_realization_tracks_subinterval_series():
     cfg.ipars[1] = 2
     cfg.nipars = 6
     solver = OdtSolver(cfg, OdtState(np.linspace(0.0, 1.0, 18), np.zeros(18), np.zeros(18)), OdtRNG(seed_index=1))
-    result = solver.run_scheduled_realization(max_trials=5)
+    result = solver.run_scheduled_realization(max_trials=5, collect_stats=True)
     assert result.itime == cfg.nstat * cfg.ntseg
     assert len(result.centerline_u_sum) == result.itime
     assert len(result.centerline_u2_sum) == result.itime
     assert result.physical_time == pytest.approx(cfg.tend)
+    assert result.cstat is not None
+
+
+def test_run_iterations_accumulates_series_across_realizations():
+    cfg = _dummy_config(18)
+    cfg.visc = 1.0e-5
+    cfg.tend = 6.0e-4
+    cfg.niter = 2
+    cfg.nstat = 2
+    cfg.ntseg = 3
+    cfg.rpars[1] = 0.2
+    cfg.rpars[2] = 1.5
+    cfg.rpars[3] = 0.5
+    cfg.rpars[4] = 0.5
+    cfg.rpars[5] = 2.0e-4
+    cfg.nrpars = 6
+    cfg.ipars[1] = 2
+    cfg.nipars = 6
+    init_state = OdtState(np.linspace(0.0, 1.0, 18), np.zeros(18), np.zeros(18))
+    solver = OdtSolver(cfg, init_state, OdtRNG(seed_index=1))
+    result = solver.run_iterations(niter=2, max_trials=5, collect_stats=True)
+    assert result.itime == cfg.nstat * cfg.ntseg
+    assert result.time.shape == (result.itime,)
+    assert result.variance.shape == (result.itime,)
+    assert result.cstat is not None
+    assert len(result.iteration_results) == 2
+    assert result.final_rng_state == solver.rng.get_state()

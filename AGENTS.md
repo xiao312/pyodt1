@@ -16,6 +16,7 @@ When implementing or modifying any Python functionality intended to reproduce le
 - `scripts/compare_one_step.py` — validated core eddy path
 - `scripts/compare_advance.py` — deterministic advancement / initialization path
 - `scripts/compare_multi_trial.py` — `BLowerdt` and reduced multi-trial scheduling path
+- `scripts/compare_iterations.py` — repeated realizations and simplified statistics/output path
 
 ## Workflow expectation
 

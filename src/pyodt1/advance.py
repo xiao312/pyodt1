@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 import numpy as np
 
@@ -33,7 +34,15 @@ def advance_diffusion(r: np.ndarray, tstep: float, dom: float, visc: float, forc
     return arr
 
 
-def equation_step(state: OdtState, delt: float, dom: float, visc: float, pgrad: float, rpars: np.ndarray) -> OdtState:
+def equation_step(
+    state: OdtState,
+    delt: float,
+    dom: float,
+    visc: float,
+    pgrad: float,
+    rpars: np.ndarray,
+    stats_callback: Callable[[OdtState, float], None] | None = None,
+) -> OdtState:
     """Advance the deterministic transport equations over ``delt``.
 
     This ports the numerically active part of ``BEqnStep.f``.
@@ -51,6 +60,8 @@ def equation_step(state: OdtState, delt: float, dom: float, visc: float, pgrad: 
     out = state.copy()
     zero = 0.0
     for _ in range(irat + 1):
+        if stats_callback is not None:
+            stats_callback(out.copy(), et)
         out.u = advance_diffusion(out.u, et, dom, visc, pgrad)
         out.v = advance_diffusion(out.v, et, dom, visc, zero)
         out.w = advance_diffusion(out.w, et, dom, visc, zero)

@@ -9,6 +9,7 @@ from pyodt1.config import EddySample, EddySizeDistribution, OdtConfig, load_lega
 from pyodt1.eddy_sampling import build_length_distribution, sample_eddy
 from pyodt1.rng import OdtRNG
 from pyodt1.state import OdtState
+from pyodt1.statistics import accumulate_cstats, finalize_series_variance, initialize_series, initialize_time_statistics, write_series_text
 from pyodt1.triplet import add_k, triplet_map
 
 
@@ -37,6 +38,19 @@ class RunResult:
     itime: int = 0
     centerline_u_sum: list[float] | None = None
     centerline_u2_sum: list[float] | None = None
+    cstat: np.ndarray | None = None
+
+
+@dataclass(slots=True)
+class MultiIterationResult:
+    niter: int
+    itime: int
+    series: np.ndarray
+    time: np.ndarray
+    variance: np.ndarray
+    final_rng_state: tuple[int, int]
+    iteration_results: list[RunResult]
+    cstat: np.ndarray | None = None
 
 
 class OdtSolver:
@@ -45,6 +59,7 @@ class OdtSolver:
             raise ValueError("config.nmesh must match state size")
         self.config = config
         self.state = state
+        self.initial_state = state.copy()
         self.rng = rng
         self.dist: EddySizeDistribution = build_length_distribution(config.nmesh, config.ipars, config.nipars)
         self.ii = 0
@@ -232,6 +247,7 @@ class OdtSolver:
         dt: float | None = None,
         td: float | None = None,
         max_trials: int | None = None,
+        collect_stats: bool = False,
     ) -> RunResult:
         if tend is None:
             tend = float(self.config.tend)
@@ -255,14 +271,18 @@ class OdtSolver:
         centerline_u_sum: list[float] = []
         centerline_u2_sum: list[float] = []
         segment_dt = float(tend) / float(nstat * ntseg)
+        stats = initialize_time_statistics(self.state.nmesh, nstat) if collect_stats else None
 
-        for _istat in range(nstat):
+        for istat in range(1, nstat + 1):
             for _itseg in range(ntseg):
                 tmark = tmark + segment_dt
                 itime += 1
                 while scheduled_time <= tmark and (max_trials is None or self.ii < max_trials):
                     if (scheduled_time - physical_time) >= td:
-                        self.state = equation_step(self.state, scheduled_time - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars)
+                        callback = None
+                        if stats is not None:
+                            callback = lambda snapshot, et, istat=istat: accumulate_cstats(stats, snapshot, et, istat)
+                        self.state = equation_step(self.state, scheduled_time - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars, stats_callback=callback)
                         physical_time = scheduled_time
 
                     sample, dt, td = self.sample_only(dt, td)
@@ -270,7 +290,10 @@ class OdtSolver:
                         self.apply_eddy(sample)
                         accepted_count += 1
                         if scheduled_time > physical_time:
-                            self.state = equation_step(self.state, scheduled_time - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars)
+                            callback = None
+                            if stats is not None:
+                                callback = lambda snapshot, et, istat=istat: accumulate_cstats(stats, snapshot, et, istat)
+                            self.state = equation_step(self.state, scheduled_time - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars, stats_callback=callback)
                             physical_time = scheduled_time
                     else:
                         rejected_count += 1
@@ -279,7 +302,10 @@ class OdtSolver:
                     dt, td = self.raise_dt(dt, td)
 
                 if tmark > physical_time:
-                    self.state = equation_step(self.state, tmark - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars)
+                    callback = None
+                    if stats is not None:
+                        callback = lambda snapshot, et, istat=istat: accumulate_cstats(stats, snapshot, et, istat)
+                    self.state = equation_step(self.state, tmark - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars, stats_callback=callback)
                     physical_time = tmark
                 self._series_accumulate(centerline_u_sum, centerline_u2_sum)
 
@@ -296,4 +322,61 @@ class OdtSolver:
             itime=itime,
             centerline_u_sum=centerline_u_sum,
             centerline_u2_sum=centerline_u2_sum,
+            cstat=None if stats is None else stats.cstat.copy(),
         )
+
+    def run_iterations(
+        self,
+        *,
+        niter: int | None = None,
+        tend: float | None = None,
+        nstat: int | None = None,
+        ntseg: int | None = None,
+        max_trials: int | None = None,
+        collect_stats: bool = True,
+    ) -> MultiIterationResult:
+        if niter is None:
+            niter = int(self.config.niter)
+        if tend is None:
+            tend = float(self.config.tend)
+        if nstat is None:
+            nstat = int(self.config.nstat)
+        if ntseg is None:
+            ntseg = int(self.config.ntseg)
+
+        series = initialize_series()
+        agg_stats = initialize_time_statistics(self.config.nmesh, nstat) if collect_stats else None
+        iteration_results: list[RunResult] = []
+
+        for _ in range(niter):
+            self.state = self.initial_state.copy()
+            result = self.run_scheduled_realization(
+                tend=tend,
+                nstat=nstat,
+                ntseg=ntseg,
+                max_trials=max_trials,
+                collect_stats=collect_stats,
+            )
+            iteration_results.append(result)
+            if result.centerline_u_sum is not None and result.centerline_u2_sum is not None:
+                count = result.itime
+                series.sums[0, :count] += np.asarray(result.centerline_u_sum, dtype=float)
+                series.sums[1, :count] += np.asarray(result.centerline_u2_sum, dtype=float)
+            if agg_stats is not None and result.cstat is not None:
+                agg_stats.cstat += result.cstat
+
+        itime = iteration_results[-1].itime if iteration_results else 0
+        time, variance = finalize_series_variance(niter, itime, tend, series.sums)
+        return MultiIterationResult(
+            niter=niter,
+            itime=itime,
+            series=series.sums.copy(),
+            time=time,
+            variance=variance,
+            final_rng_state=self.rng.get_state(),
+            iteration_results=iteration_results,
+            cstat=None if agg_stats is None else agg_stats.cstat.copy(),
+        )
+
+    def write_series_output(self, result: MultiIterationResult) -> str:
+        return write_series_text(result.niter, result.itime, self.config.tend, self.config.ntseg, result.series, self.config.ioptions)

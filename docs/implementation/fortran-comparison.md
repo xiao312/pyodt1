@@ -38,6 +38,14 @@ The reduced multi-trial scheduling comparison shows agreement for:
 - centerline series accumulation
 - final state arrays and final RNG state
 
+The repeated-realization statistics/output comparison shows agreement for:
+
+- `niter`-level repeated scheduled realizations
+- `BStats`-style `cstat` accumulation
+- `BSeries` aggregation across realizations
+- `BWriteSeries` time/variance output
+- final RNG state after multiple realizations
+
 ## Scope caveat
 
 This still does **not** yet imply full equivalence with the original `odt1` solver. However, the validated scope now includes:
@@ -46,4 +54,4 @@ This still does **not** yet imply full equivalence with the original `odt1` solv
 - deterministic advancement and initialization,
 - a reduced but faithful multi-trial realization schedule.
 
-Statistics/output routines such as the full `BSnap` / `BWriteSeries` production path are still only partially represented in Python.
+The main remaining gap is the richer postprocessing/output path around `BSnap` and related record-writing routines. However, simplified `BStats`, `BSeries`, and `BWriteSeries`-style behavior is now implemented and cross-checked.

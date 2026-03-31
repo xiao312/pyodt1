@@ -93,14 +93,15 @@ docs/_build/html/index.html
 If you are new to ODT or new to this package, a good sequence is:
 
 1. [ODT for CFD readers](tutorials/odt-for-cfd-readers.md)
-2. [Algorithm overview](algorithms/overview.md)
-3. [Legacy Fortran to Python mapping](algorithms/legacy-fortran-mapping.md)
-4. [Legacy RNG](algorithms/rng.md)
-5. [Triplet map](algorithms/triplet-map.md)
-6. [Eddy sampling](algorithms/eddy-sampling.md)
-7. [Acceptance probability](algorithms/acceptance-probability.md)
-8. [Accepted eddy update](algorithms/accepted-eddy-update.md)
-9. [Validation harness](implementation/validation-harness.md)
+2. [ODT in the literature](background/odt-literature.md)
+3. [Algorithm overview](algorithms/overview.md)
+4. [Legacy Fortran to Python mapping](algorithms/legacy-fortran-mapping.md)
+5. [Legacy RNG](algorithms/rng.md)
+6. [Triplet map](algorithms/triplet-map.md)
+7. [Eddy sampling](algorithms/eddy-sampling.md)
+8. [Acceptance probability](algorithms/acceptance-probability.md)
+9. [Accepted eddy update](algorithms/accepted-eddy-update.md)
+10. [Validation harness](implementation/validation-harness.md)
 
 ## Important current scope caveat
 

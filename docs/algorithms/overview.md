@@ -21,6 +21,8 @@ The practical motivation behind ODT is that fully resolved turbulent reacting-fl
 
 This makes ODT much cheaper than DNS while still retaining nontrivial structure in the transported fields.
 
+If you want external context beyond this repository, see [ODT in the literature](../background/odt-literature.md), which links to foundational papers and later ODT / ODTLES references.
+
 ## High-level picture of one ODT step
 
 At the most abstract level, the minimal path currently implemented and validated in `pyodt1` is:

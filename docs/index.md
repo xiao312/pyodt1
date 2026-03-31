@@ -8,6 +8,7 @@ Python reimplementation of the Basic ODT (`odt1`) package.
 
 getting-started
 tutorials/odt-for-cfd-readers
+background/odt-literature
 algorithms/overview
 algorithms/legacy-fortran-mapping
 algorithms/rng

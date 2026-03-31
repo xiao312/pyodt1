@@ -40,4 +40,13 @@ Primary upstream reference:
 
 ## Notes
 
-This mapping is still partial. The current code validates the minimal eddy-sampling and accepted-eddy update path, not yet the full `Bodt.f` execution loop.
+This mapping now covers most of the numerically important `Bodt.f` execution path: initialization, eddy sampling, acceptance, triplet application, adaptive `dt`, deterministic advancement, repeated realizations, time statistics, change statistics, and major postprocessing/output helpers.
+
+The main remaining gaps or caveats are:
+
+- top-level legacy file-opening / file-closing orchestration in `Bodt.f` is not mirrored as a single monolithic Python driver
+- `BReadOptions.f` is not yet represented as a dedicated Python parser; options are currently handled through already-loaded configuration objects
+- `BrngGet.f` / `BrngPut.f` are not yet exposed as direct Python compatibility helpers
+- `BInitStats.f` is represented structurally by `initialize_series()`, `initialize_time_statistics()`, and `initialize_eddy_statistics()`, but not as a dedicated one-to-one wrapper
+- `BAddTerm.f` remains an internal Fortran helper with no separate Python public wrapper
+- direct runtime validation of the original `BSnap` intercomparison (`ioptions(1)=0`) path still hits a local-toolchain crash, although the Python intercomparison writers and parsers are tested and the xmgrace (`ioptions(1)=1`) `BSnap` path is validated on multiple fixtures

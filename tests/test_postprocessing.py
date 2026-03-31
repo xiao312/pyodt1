@@ -2,11 +2,15 @@ import numpy as np
 
 from pyodt1.state import OdtState
 from pyodt1.statistics import (
+    accumulate_change,
     brecord_text,
     compute_snap_outputs,
     initialize_eddy_statistics,
+    parse_brecord_text,
+    parse_snap_intercomparison,
+    parse_snap_xmgrace,
+    parse_xrecord_text,
     save_old_values,
-    accumulate_change,
     write_snap_intercomparison,
     write_snap_xmgrace,
     xrecord_text,
@@ -31,8 +35,14 @@ def test_brecord_and_xrecord_format():
     btext = brecord_text(-3, arr)
     assert btext.startswith("    -3\n")
     assert "  1.0000000E+00" in btext
+    parsed_b = parse_brecord_text(btext)
+    assert parsed_b.header_n == -3
+    assert np.allclose(parsed_b.records[0], arr)
     xtext = xrecord_text(3, np.array([0.1, 0.2, 0.3]), arr)
     assert "  1.0000000E-01  1.0000000E+00" in xtext
+    parsed_x = parse_xrecord_text(xtext)
+    assert np.allclose(parsed_x[:, 0], [0.1, 0.2, 0.3])
+    assert np.allclose(parsed_x[:, 1], arr)
 
 
 def test_compute_snap_outputs_and_write_files(tmp_path):
@@ -56,9 +66,33 @@ def test_compute_snap_outputs_and_write_files(tmp_path):
     snap = compute_snap_outputs(n, np.zeros(n), np.zeros(n), np.zeros(n), 1.0, 1.0e-5, 1, edstat, cstat)
     assert snap.mean_u.shape == (n,)
     assert snap.variances.shape == (3, n)
-    write_snap_intercomparison(tmp_path, 1, snap)
-    write_snap_xmgrace(tmp_path, 1, snap)
-    assert (tmp_path / "A1.dat").exists()
-    assert (tmp_path / "D1.dat").exists()
-    assert (tmp_path / "H1.dat").exists()
-    assert (tmp_path / "I1.dat").exists()
+    inter_dir = tmp_path / "inter"
+    xmgr_dir = tmp_path / "xmgr"
+    inter_dir.mkdir()
+    xmgr_dir.mkdir()
+    write_snap_intercomparison(inter_dir, 1, snap)
+    write_snap_xmgrace(xmgr_dir, 1, snap)
+    assert (inter_dir / "A1.dat").exists()
+    assert (inter_dir / "D1.dat").exists()
+    assert (xmgr_dir / "H1.dat").exists()
+    assert (xmgr_dir / "I1.dat").exists()
+
+    inter = parse_snap_intercomparison(inter_dir, 1)
+    xmgr = parse_snap_xmgrace(xmgr_dir, 1)
+    assert np.allclose(inter.records["ht"], snap.ht)
+    assert np.allclose(inter.records["mean_u"], snap.mean_u)
+    assert np.allclose(inter.records["variances"], snap.variances)
+    assert np.allclose(inter.records["advective_flux_u"], snap.advective_flux_u)
+    assert np.allclose(inter.records["budget_terms"][0], snap.shear_production)
+    assert np.allclose(inter.records["budget_terms"][1], snap.advective_transport)
+    assert np.allclose(inter.records["budget_terms"][2], snap.viscous_transport)
+    assert np.allclose(inter.records["budget_terms"][3], snap.dissipation)
+    assert np.allclose(inter.records["balance_xy"][1:, 0], snap.ht)
+    assert np.allclose(inter.records["balance_xy"][1:, 1], snap.balance)
+    assert np.allclose(xmgr.records["A"][1:, 0], snap.ht)
+    assert np.allclose(xmgr.records["A"][1:, 1], snap.mean_u)
+    assert np.allclose(xmgr.records["D"][1:, 1], snap.shear_production)
+    assert np.allclose(xmgr.records["E"][1:, 1], snap.advective_transport)
+    assert np.allclose(xmgr.records["F"][1:, 1], snap.viscous_transport)
+    assert np.allclose(xmgr.records["G"][1:, 1], snap.dissipation)
+    assert np.allclose(xmgr.records["H"][1:, 1], snap.balance)

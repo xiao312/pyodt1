@@ -43,6 +43,19 @@ class SnapOutputs:
     eddy_count_far_wall: np.ndarray
 
 
+@dataclass(slots=True)
+class ParsedBRecord:
+    header_n: int | None
+    records: np.ndarray
+
+
+@dataclass(slots=True)
+class ParsedSnapFiles:
+    mode: str
+    istat: int
+    records: dict[str, np.ndarray]
+
+
 def initialize_series(max_points: int = MAX_SERIES_POINTS) -> SeriesData:
     return SeriesData(sums=np.zeros((2, int(max_points)), dtype=float))
 
@@ -180,6 +193,97 @@ def xrecord_text(n: int, x: np.ndarray, s: np.ndarray) -> str:
     values[np.abs(values) < 1.0e-30] = 0.0
     lines = [f"{xv[j]:15.7E}{values[j]:15.7E}" for j in range(int(n))]
     return "\n".join(lines) + "\n"
+
+
+
+def parse_brecord_text(text: str) -> ParsedBRecord:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return ParsedBRecord(header_n=None, records=np.zeros((0, 0), dtype=float))
+
+    header_n: int | None = None
+    start = 0
+    first = lines[0]
+    if "E" not in first.upper() and "." not in first:
+        header_n = int(first)
+        start = 1
+    if header_n is None:
+        nvals = len(lines) if len(lines) > 0 else 0
+    else:
+        nvals = abs(header_n)
+    values = np.asarray([float(line) for line in lines[start:]], dtype=float)
+    if nvals == 0:
+        records = np.zeros((0, 0), dtype=float)
+    else:
+        if values.size % nvals != 0:
+            raise ValueError("BRecord text does not contain a whole number of records")
+        records = values.reshape(values.size // nvals, nvals)
+    return ParsedBRecord(header_n=header_n, records=records)
+
+
+
+def parse_xrecord_text(text: str) -> np.ndarray:
+    rows = [[float(tok) for tok in line.split()] for line in text.splitlines() if line.strip()]
+    if not rows:
+        return np.zeros((0, 2), dtype=float)
+    return np.asarray(rows, dtype=float)
+
+
+
+def parse_eddy_count_text(text: str) -> np.ndarray:
+    rows = [[float(tok) for tok in line.split()] for line in text.splitlines() if line.strip()]
+    if not rows:
+        return np.zeros((0, 3), dtype=float)
+    return np.asarray(rows, dtype=float)
+
+
+
+def parse_snap_intercomparison(output_dir: str | Path, istat: int) -> ParsedSnapFiles:
+    out = Path(output_dir)
+    parsed_a = parse_brecord_text((out / f"A{istat}.dat").read_text(encoding="utf-8"))
+    parsed_b = parse_brecord_text((out / f"B{istat}.dat").read_text(encoding="utf-8"))
+    parsed_c = parse_brecord_text((out / f"C{istat}.dat").read_text(encoding="utf-8"))
+    parsed_d = parse_brecord_text((out / f"D{istat}.dat").read_text(encoding="utf-8"))
+    parsed_h = parse_xrecord_text((out / f"H{istat}.dat").read_text(encoding="utf-8"))
+    parsed_i = parse_eddy_count_text((out / f"I{istat}.dat").read_text(encoding="utf-8"))
+    return ParsedSnapFiles(
+        mode="intercomparison",
+        istat=int(istat),
+        records={
+            "ht": parsed_a.records[0],
+            "mean_u": parsed_a.records[1],
+            "variances": parsed_b.records[1:],
+            "advective_flux_u": parsed_c.records[1],
+            "budget_terms": parsed_d.records[1:],
+            "balance_xy": parsed_h,
+            "eddy_counts": parsed_i,
+        },
+    )
+
+
+
+def parse_snap_xmgrace(output_dir: str | Path, istat: int) -> ParsedSnapFiles:
+    out = Path(output_dir)
+    parsed = {
+        name: parse_xrecord_text((out / f"{name}{istat}.dat").read_text(encoding="utf-8"))
+        for name in ["A", "B", "C", "D", "E", "F", "G", "H"]
+    }
+    parsed_i = parse_eddy_count_text((out / f"I{istat}.dat").read_text(encoding="utf-8"))
+    return ParsedSnapFiles(
+        mode="xmgrace",
+        istat=int(istat),
+        records={
+            "A": parsed["A"],
+            "B": parsed["B"],
+            "C": parsed["C"],
+            "D": parsed["D"],
+            "E": parsed["E"],
+            "F": parsed["F"],
+            "G": parsed["G"],
+            "H": parsed["H"],
+            "eddy_counts": parsed_i,
+        },
+    )
 
 
 

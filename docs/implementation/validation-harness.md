@@ -84,9 +84,11 @@ This is especially valuable because it shows that Python is not merely reproduci
 - `BChange`
 - direct `BRecord`
 - direct `XRecord` formatting
-- `BSnap` xmgrace-style output products (`A1`–`H1`, `I1`) on a controlled fixture
+- `BSnap` xmgrace-style output products on multiple controlled fixtures, including a second `istat` case
 
 `investigate_brecord.py` documents the compatibility pitfall: `BRecord` mutates `N`, so calling it with a literal constant can segfault under pass-by-reference semantics. Calling it with an integer variable works and matches the Python implementation.
+
+`investigate_bsnap_intercomparison.py` documents a separate local-toolchain caveat: the original `BSnap` intercomparison mode (`ioptions(1)=0`) currently crashes here, while the xmgrace mode (`ioptions(1)=1`) runs and is used for direct runtime comparison.
 
 ## Usage
 

@@ -35,6 +35,10 @@ Reimplement the core `odt1` package in Python with emphasis on:
 
 ## Documentation
 
+Project documentation is published at:
+
+- <https://xiao312.github.io/pyodt1/>
+
 This repo includes a Sphinx + MyST + Furo documentation scaffold under `docs/`.
 
 Build locally with:

@@ -18,6 +18,11 @@ dev = [
   "ruff",
   "mypy",
 ]
+docs = [
+  "sphinx",
+  "myst-parser",
+  "furo",
+]
 
 [build-system]
 requires = ["setuptools>=61"]

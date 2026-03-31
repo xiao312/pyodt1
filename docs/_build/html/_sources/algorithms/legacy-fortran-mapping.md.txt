@@ -1,0 +1,25 @@
+# Legacy Fortran to Python mapping
+
+## Upstream Fortran source
+
+Primary upstream reference:
+- `external/odt1/source1/`
+
+## Current mapping
+
+| Fortran | Python |
+|---|---|
+| `Brng.f` | `pyodt1.rng.OdtRNG` |
+| `BSeeds.f` | `pyodt1.rng.OdtRNG(seed_index=...)` |
+| `BLenProb.f` | `pyodt1.eddy_sampling.build_length_distribution()` |
+| `BLength.f` | `pyodt1.eddy_sampling.sample_length()` |
+| location sampling in `BSampleEddy.f` | `pyodt1.eddy_sampling.sample_location()` |
+| `BsKd.f` | `pyodt1.eddy_sampling.bs_kd()` |
+| `BProb.f` | `pyodt1.acceptance.acceptance_probability()` |
+| `BTriplet.f` | `pyodt1.triplet.triplet_map()` |
+| `BAddK.f` | `pyodt1.triplet.add_k()` |
+| `BEddy.f` | `pyodt1.solver.OdtSolver.apply_eddy()` |
+
+## Notes
+
+This mapping is still partial. The current code validates the minimal eddy-sampling and accepted-eddy update path, not yet the full `Bodt.f` execution loop.

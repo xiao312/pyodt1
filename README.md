@@ -32,3 +32,17 @@ Reimplement the core `odt1` package in Python with emphasis on:
 2. testability,
 3. reproducibility,
 4. later comparison against `odt1` and `BYUignite/ODT`.
+
+## Documentation
+
+This repo includes a Sphinx + MyST + Furo documentation scaffold under `docs/`.
+
+Build locally with:
+
+```bash
+source .venv/bin/activate
+pip install -r docs/requirements.txt
+sphinx-build -b html docs docs/_build/html
+```
+
+The site is set up for deployment to GitHub Pages with GitHub Actions.

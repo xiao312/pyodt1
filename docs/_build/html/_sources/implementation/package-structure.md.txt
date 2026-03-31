@@ -1,0 +1,23 @@
+# Package structure
+
+```text
+src/pyodt1/
+  __init__.py
+  acceptance.py
+  config.py
+  eddy_sampling.py
+  rng.py
+  solver.py
+  state.py
+  triplet.py
+```
+
+## Roles
+
+- `config.py` — legacy input parsing and small config dataclasses
+- `rng.py` — Fortran-compatible RNG path
+- `eddy_sampling.py` — eddy-size distribution, eddy-size sampling, location sampling, `BsKd`
+- `acceptance.py` — acceptance probability
+- `triplet.py` — triplet map and `c*K` increment
+- `state.py` — state container
+- `solver.py` — minimal one-step sampling and accepted-eddy application

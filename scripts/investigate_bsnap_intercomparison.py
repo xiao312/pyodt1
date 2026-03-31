@@ -10,6 +10,25 @@ ROOT = Path(__file__).resolve().parents[1]
 ODT1_SRC = ROOT / "external" / "odt1" / "source1"
 
 
+B_RECORD_NEG_DRIVER = """
+      program investigate_brecord_negative
+      implicit none
+      integer n
+      double precision s(6)
+      n = -6
+      s(1)=1.d0
+      s(2)=2.d0
+      s(3)=3.d0
+      s(4)=4.d0
+      s(5)=5.d0
+      s(6)=6.d0
+      open(61,file='brecord_neg6.dat',status='unknown')
+      call BRecord(61,n,s)
+      close(61)
+      end
+"""
+
+
 def write_driver(path: Path, mode: int) -> None:
     path.write_text(
         f"""
@@ -89,17 +108,30 @@ def compile_and_run(workdir: Path, mode: int) -> int:
 
 
 def main() -> int:
-    if not shutil.which("gfortran"):
+    gfortran = shutil.which("gfortran")
+    if not gfortran:
         print("gfortran not found on PATH")
         return 1
     with tempfile.TemporaryDirectory(prefix="pyodt1-bsnap-") as tmp:
         workdir = Path(tmp)
         inter_code = compile_and_run(workdir, 0)
         xmgr_code = compile_and_run(workdir, 1)
+
+        neg_driver = workdir / "driver_brecord_neg.f90"
+        neg_driver.write_text(B_RECORD_NEG_DRIVER.strip() + "\n", encoding="utf-8")
+        neg_exe = workdir / "brecord_neg.exe"
+        subprocess.run(
+            [gfortran, "-O0", "-std=legacy", "-o", str(neg_exe), str(ODT1_SRC / "BRecord.f"), str(neg_driver)],
+            check=True,
+            cwd=workdir,
+        )
+        neg_result = subprocess.run([str(neg_exe)], cwd=workdir)
+
         print("# BSnap intercomparison investigation")
         print(f"intercomparison_exit_code={inter_code}")
         print(f"xmgrace_exit_code={xmgr_code}")
-        print("intercomparison mode currently crashes under the local toolchain, while xmgrace mode runs.")
+        print(f"brecord_negative_header_exit_code={int(neg_result.returncode)}")
+        print("The crash is traced to the intercomparison-mode header convention: BSnap calls BRecord with negative N to request a header, and BRecord uses that negative N in automatic array extents before taking abs(N). This is undefined behavior and crashes here for sufficiently large |N|.")
     return 0
 
 

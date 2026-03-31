@@ -68,8 +68,8 @@ python scripts/compare_postprocessing.py
 - `compare_advance.py` covers deterministic advancement, initialization, and exponential waiting-time sampling.
 - `compare_multi_trial.py` covers `BLowerdt` and a reduced multi-trial `Bodt`-style scheduled realization.
 - `compare_iterations.py` covers repeated realizations plus simplified `BStats` / `BSeries` / `BWriteSeries`-style behavior.
-- `compare_postprocessing.py` covers `BSetOld`, `BChange`, direct `BRecord`, direct `XRecord`, and `BSnap` xmgrace-style outputs on multiple fixtures.
+- `compare_postprocessing.py` covers `BSetOld`, `BChange`, direct `BRecord`, direct `XRecord`, original `BSnap` xmgrace-style outputs on multiple fixtures, and a patched-legacy intercomparison comparison.
 
 BRecord note: the original Fortran routine mutates `N` (`N=abs(N)`), so calling it with a literal such as `call BRecord(61,3,s)` segfaults under the local toolchain because the routine writes through a by-reference constant argument. Calling it with an integer variable works, and `BRecord` is now direct-runtime validated that way. See `scripts/investigate_brecord.py`.
 
-BSnap note: the original xmgrace path (`ioptions(1)=1`) is direct-runtime validated here. The original intercomparison path (`ioptions(1)=0`) currently segfaults under the local toolchain; see `scripts/investigate_bsnap_intercomparison.py`.
+BSnap note: the original xmgrace path (`ioptions(1)=1`) is direct-runtime validated here. The original intercomparison path (`ioptions(1)=0`) currently segfaults under the local toolchain; see `scripts/investigate_bsnap_intercomparison.py`. For added coverage, `compare_postprocessing.py` also checks a small patched-legacy intercomparison path that preserves the intended output semantics without relying on the crashing in-place negative-`N` convention.

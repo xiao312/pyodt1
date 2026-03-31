@@ -52,7 +52,8 @@ The postprocessing/change-statistics comparison shows agreement for:
 - `BChange`
 - direct `BRecord`
 - direct `XRecord`
-- `BSnap` xmgrace-style output products on multiple controlled fixtures, including a second `istat` case
+- original `BSnap` xmgrace-style output products on multiple controlled fixtures, including a second `istat` case
+- patched-legacy `BSnap` intercomparison products on a controlled fixture
 
 ## Scope caveat
 
@@ -64,4 +65,4 @@ This still does **not** yet imply full equivalence with the original `odt1` solv
 
 `BRecord` compatibility has now been investigated: the crash was caused by passing a literal argument to a routine that mutates `N` via `N=abs(N)`. Under Fortran pass-by-reference semantics, writing through a constant argument can segfault. A minimal reproducer is provided in `scripts/investigate_brecord.py`. When called correctly with an integer variable, `BRecord` runs and matches the Python implementation.
 
-A separate caveat remains for the original `BSnap` intercomparison mode (`ioptions(1)=0`): a minimal reproducer in `scripts/investigate_bsnap_intercomparison.py` shows that this path currently segfaults under the local toolchain, while the xmgrace mode (`ioptions(1)=1`) runs and matches the Python implementation on multiple fixtures. The Python-side intercomparison writers/parsers are still regression-tested locally.
+A separate caveat remains for the original `BSnap` intercomparison mode (`ioptions(1)=0`): a minimal reproducer in `scripts/investigate_bsnap_intercomparison.py` shows that this path currently segfaults under the local toolchain, while the xmgrace mode (`ioptions(1)=1`) runs and matches the Python implementation on multiple fixtures. The failure is tied to the negative-`N` header-writing convention around `BRecord` in the original intercomparison path. To extend numerical coverage without over-claiming direct validation of the crashing original routine, `compare_postprocessing.py` also compares against a small patched-legacy intercomparison path that preserves the intended record semantics while avoiding the in-place negative-`N` mutation.

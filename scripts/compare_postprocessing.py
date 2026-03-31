@@ -27,6 +27,7 @@ from pyodt1.statistics import (
 
 ROOT = Path(__file__).resolve().parents[1]
 ODT1_SRC = ROOT / "external" / "odt1" / "source1"
+BSNAP_SRC = ODT1_SRC / "BSnap.f"
 
 
 @dataclass(slots=True)
@@ -102,7 +103,7 @@ def make_snap_fixture_b() -> SnapFixture:
     edstat[1, 1, 3, 1] = 2.0
     edstat[2, 0, 3, 1] = 1.0
     edstat[3, 1, 3, 1] = 4.0
-    return SnapFixture("xmgrace_fixture_2", n, 2, "xmgrace", 1.5, 2.5e-5, cstat, edstat)
+    return SnapFixture("intercomparison_fixture", n, 2, "intercomparison", 1.5, 2.5e-5, cstat, edstat)
 
 
 def python_reference(tmp: Path) -> dict:
@@ -298,6 +299,42 @@ def write_snap_driver(workdir: Path, fixture: SnapFixture) -> None:
     (workdir / "fixture_snap.dat").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_safe_brecord(path: Path) -> None:
+    path.write_text(
+        """
+subroutine BRecord(ifile, N, s)
+  implicit none
+  integer :: ifile, N, j, m, nabs
+  double precision :: s(*), h(10000)
+100 format(E15.7)
+200 format(I6)
+  if (N .lt. 0) write(ifile, 200) N
+  nabs = abs(N)
+  do j = 1, nabs
+    h(j) = s(j)
+    if (abs(h(j)) .lt. 0.1d0**30) h(j) = 0.d0
+  end do
+  write(ifile, 100) (h(m), m=1, nabs)
+  call flush(ifile)
+  return
+end
+        """.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def write_patched_bsnap_intercomparison(path: Path) -> None:
+    text = BSNAP_SRC.read_text(encoding="utf-8")
+    text = text.replace(
+        "       integer N, i, j, k, ii, istat, ifile, ioptions(100), N1\n",
+        "       integer N, i, j, k, ii, istat, ifile, ioptions(100), N1, NWRITE\n",
+    )
+    text = text.replace("       N=-N", "       NWRITE=-N")
+    text = text.replace("call BRecord(ifile,N,ht)", "call BRecord(ifile,NWRITE,ht)")
+    path.write_text(text, encoding="utf-8")
+
+
 def compile_and_run(workdir: Path, exe_name: str, sources: list[Path]) -> None:
     gfortran = shutil.which("gfortran")
     if not gfortran:
@@ -344,18 +381,23 @@ def main() -> int:
             workdir = tmp / fixture.name
             workdir.mkdir(exist_ok=True)
             write_snap_driver(workdir, fixture)
-            compile_and_run(
-                workdir,
-                "snap.exe",
-                [ODT1_SRC / "BRecord.f", ODT1_SRC / "XRecord.f", ODT1_SRC / "BSnap.f", workdir / "driver_snap.f90"],
-            )
+            sources = [ODT1_SRC / "BRecord.f", ODT1_SRC / "XRecord.f", ODT1_SRC / "BSnap.f", workdir / "driver_snap.f90"]
+            label = fixture.name
+            if fixture.mode == "intercomparison":
+                safe_brecord = workdir / "BRecord_safe.f90"
+                patched_bsnap = workdir / "BSnap_patched.f"
+                write_safe_brecord(safe_brecord)
+                write_patched_bsnap_intercomparison(patched_bsnap)
+                sources = [safe_brecord, ODT1_SRC / "XRecord.f", patched_bsnap, workdir / "driver_snap.f90"]
+                label = fixture.name + "_patched"
+            compile_and_run(workdir, "snap.exe", sources)
             if fixture.mode == "xmgrace":
                 ft_records = parse_snap_xmgrace(workdir, fixture.istat).records
             else:
                 ft_records = parse_snap_intercomparison(workdir, fixture.istat).records
             py_records = ref["snaps"][fixture.name][fixture.mode]
             for name, diff in compare_snap_records(py_records, ft_records):
-                print(f"{fixture.name}.{fixture.mode}.{name}: max_abs_diff={diff:.6e}")
+                print(f"{label}.{fixture.mode}.{name}: max_abs_diff={diff:.6e}")
     return 0
 
 

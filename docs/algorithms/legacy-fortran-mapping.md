@@ -49,4 +49,4 @@ The main remaining gaps or caveats are:
 - `BrngGet.f` / `BrngPut.f` are not yet exposed as direct Python compatibility helpers
 - `BInitStats.f` is represented structurally by `initialize_series()`, `initialize_time_statistics()`, and `initialize_eddy_statistics()`, but not as a dedicated one-to-one wrapper
 - `BAddTerm.f` remains an internal Fortran helper with no separate Python public wrapper
-- direct runtime validation of the original `BSnap` intercomparison (`ioptions(1)=0`) path still hits a local-toolchain crash, although the Python intercomparison writers and parsers are tested and the xmgrace (`ioptions(1)=1`) `BSnap` path is validated on multiple fixtures
+- direct runtime validation of the original `BSnap` intercomparison (`ioptions(1)=0`) path still hits a local-toolchain crash in the unmodified legacy code, although the Python intercomparison writers/parsers are tested, the xmgrace (`ioptions(1)=1`) `BSnap` path is validated on multiple fixtures, and a patched-legacy intercomparison comparison is available for additional numeric coverage

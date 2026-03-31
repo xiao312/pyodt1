@@ -9,7 +9,7 @@ from pyodt1.config import EddySample, EddySizeDistribution, OdtConfig, load_lega
 from pyodt1.eddy_sampling import build_length_distribution, sample_eddy
 from pyodt1.rng import OdtRNG
 from pyodt1.state import OdtState
-from pyodt1.statistics import accumulate_cstats, finalize_series_variance, initialize_series, initialize_time_statistics, write_series_text
+from pyodt1.statistics import accumulate_change, accumulate_cstats, finalize_series_variance, initialize_eddy_statistics, initialize_series, initialize_time_statistics, save_old_values, write_series_text
 from pyodt1.triplet import add_k, triplet_map
 
 
@@ -39,6 +39,7 @@ class RunResult:
     centerline_u_sum: list[float] | None = None
     centerline_u2_sum: list[float] | None = None
     cstat: np.ndarray | None = None
+    edstat: np.ndarray | None = None
 
 
 @dataclass(slots=True)
@@ -51,6 +52,7 @@ class MultiIterationResult:
     final_rng_state: tuple[int, int]
     iteration_results: list[RunResult]
     cstat: np.ndarray | None = None
+    edstat: np.ndarray | None = None
 
 
 class OdtSolver:
@@ -272,6 +274,7 @@ class OdtSolver:
         centerline_u2_sum: list[float] = []
         segment_dt = float(tend) / float(nstat * ntseg)
         stats = initialize_time_statistics(self.state.nmesh, nstat) if collect_stats else None
+        eddy_stats = initialize_eddy_statistics(self.state.nmesh, nstat) if collect_stats else None
 
         for istat in range(1, nstat + 1):
             for _itseg in range(ntseg):
@@ -282,18 +285,30 @@ class OdtSolver:
                         callback = None
                         if stats is not None:
                             callback = lambda snapshot, et, istat=istat: accumulate_cstats(stats, snapshot, et, istat)
+                        if eddy_stats is not None:
+                            save_old_values(eddy_stats, self.state, 1, self.state.nmesh - 1)
                         self.state = equation_step(self.state, scheduled_time - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars, stats_callback=callback)
+                        if eddy_stats is not None:
+                            accumulate_change(eddy_stats, self.state, 1, self.state.nmesh - 1, istat, 2)
                         physical_time = scheduled_time
 
                     sample, dt, td = self.sample_only(dt, td)
                     if sample.acceptance_probability > 0.0 and self.rng.uniform() < sample.acceptance_probability:
+                        if eddy_stats is not None:
+                            save_old_values(eddy_stats, self.state, sample.m, sample.l)
                         self.apply_eddy(sample)
+                        if eddy_stats is not None:
+                            accumulate_change(eddy_stats, self.state, sample.m, sample.l, istat, 0)
                         accepted_count += 1
                         if scheduled_time > physical_time:
                             callback = None
                             if stats is not None:
                                 callback = lambda snapshot, et, istat=istat: accumulate_cstats(stats, snapshot, et, istat)
+                            if eddy_stats is not None:
+                                save_old_values(eddy_stats, self.state, 1, self.state.nmesh - 1)
                             self.state = equation_step(self.state, scheduled_time - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars, stats_callback=callback)
+                            if eddy_stats is not None:
+                                accumulate_change(eddy_stats, self.state, 1, self.state.nmesh - 1, istat, 2)
                             physical_time = scheduled_time
                     else:
                         rejected_count += 1
@@ -305,7 +320,11 @@ class OdtSolver:
                     callback = None
                     if stats is not None:
                         callback = lambda snapshot, et, istat=istat: accumulate_cstats(stats, snapshot, et, istat)
+                    if eddy_stats is not None:
+                        save_old_values(eddy_stats, self.state, 1, self.state.nmesh - 1)
                     self.state = equation_step(self.state, tmark - physical_time, self.config.dom, self.config.visc, self.config.pgrad, self.config.rpars, stats_callback=callback)
+                    if eddy_stats is not None:
+                        accumulate_change(eddy_stats, self.state, 1, self.state.nmesh - 1, istat, 2)
                     physical_time = tmark
                 self._series_accumulate(centerline_u_sum, centerline_u2_sum)
 
@@ -323,6 +342,7 @@ class OdtSolver:
             centerline_u_sum=centerline_u_sum,
             centerline_u2_sum=centerline_u2_sum,
             cstat=None if stats is None else stats.cstat.copy(),
+            edstat=None if eddy_stats is None else eddy_stats.edstat.copy(),
         )
 
     def run_iterations(
@@ -346,6 +366,7 @@ class OdtSolver:
 
         series = initialize_series()
         agg_stats = initialize_time_statistics(self.config.nmesh, nstat) if collect_stats else None
+        agg_edstats = initialize_eddy_statistics(self.config.nmesh, nstat) if collect_stats else None
         iteration_results: list[RunResult] = []
 
         for _ in range(niter):
@@ -364,6 +385,8 @@ class OdtSolver:
                 series.sums[1, :count] += np.asarray(result.centerline_u2_sum, dtype=float)
             if agg_stats is not None and result.cstat is not None:
                 agg_stats.cstat += result.cstat
+            if agg_edstats is not None and result.edstat is not None:
+                agg_edstats.edstat += result.edstat
 
         itime = iteration_results[-1].itime if iteration_results else 0
         time, variance = finalize_series_variance(niter, itime, tend, series.sums)
@@ -376,6 +399,7 @@ class OdtSolver:
             final_rng_state=self.rng.get_state(),
             iteration_results=iteration_results,
             cstat=None if agg_stats is None else agg_stats.cstat.copy(),
+            edstat=None if agg_edstats is None else agg_edstats.edstat.copy(),
         )
 
     def write_series_output(self, result: MultiIterationResult) -> str:

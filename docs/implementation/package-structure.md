@@ -23,5 +23,5 @@ src/pyodt1/
 - `acceptance.py` — acceptance probability
 - `triplet.py` — triplet map and `c*K` increment
 - `state.py` — state container
-- `statistics.py` — `BStats`-style accumulation, `BSeries`-style centerline moments, and `BWriteSeries`-style postprocessing helpers
+- `statistics.py` — `BStats`-style accumulation, `BSeries`-style centerline moments, `BChange` / `BSetOld` helpers, `BSnap`-style postprocessing, and `BWriteSeries`-style output helpers
 - `solver.py` — one-step sampling, accepted-eddy application, `BLowerdt` / `BRaisedt` logic, realization runners including `nstat` / `ntseg` scheduling, and repeated-iteration aggregation

@@ -10,6 +10,7 @@ When implementing or modifying any Python functionality intended to reproduce le
 2. Do **not** describe a feature as validated against the original code unless the Fortran path was actually compiled and executed.
 3. If a new piece is only ported-from-source but not yet cross-checked, state that explicitly.
 4. Prefer adding or extending reproducible comparison harnesses under `scripts/`.
+5. If the original Fortran routine crashes under the available toolchain, document that explicitly and do not over-claim validation.
 
 ## Current comparison harnesses
 
@@ -17,6 +18,7 @@ When implementing or modifying any Python functionality intended to reproduce le
 - `scripts/compare_advance.py` — deterministic advancement / initialization path
 - `scripts/compare_multi_trial.py` — `BLowerdt` and reduced multi-trial scheduling path
 - `scripts/compare_iterations.py` — repeated realizations and simplified statistics/output path
+- `scripts/compare_postprocessing.py` — `BSetOld`, `BChange`, `XRecord`, and `BSnap` xmgrace-style postprocessing path
 
 ## Workflow expectation
 

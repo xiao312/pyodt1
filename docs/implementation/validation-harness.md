@@ -6,6 +6,7 @@ The main comparison tools are:
 - `scripts/compare_advance.py`
 - `scripts/compare_multi_trial.py`
 - `scripts/compare_iterations.py`
+- `scripts/compare_postprocessing.py`
 
 This script is central to the project because it turns the reimplementation effort from a qualitative translation exercise into a quantitative validation workflow.
 
@@ -75,6 +76,17 @@ This is especially valuable because it shows that Python is not merely reproduci
 - `BWriteSeries` time/variance output for the centerline series
 - final RNG state after multiple realizations
 
+## 6. Eddy/change statistics and richer postprocessing
+
+`compare_postprocessing.py` compares Python and Fortran for:
+
+- `BSetOld`
+- `BChange`
+- direct `XRecord` formatting
+- `BSnap` xmgrace-style output products (`A1`–`H1`, `I1`) on a controlled fixture
+
+Note: the standalone `BRecord` routine in this environment segfaults under the local `gfortran` toolchain, so `BRecord` itself is implemented in Python but not currently direct-runtime validated here.
+
 ## Usage
 
 ```bash
@@ -82,6 +94,7 @@ python scripts/compare_one_step.py
 python scripts/compare_advance.py
 python scripts/compare_multi_trial.py
 python scripts/compare_iterations.py
+python scripts/compare_postprocessing.py
 ```
 
 ## Behavior with and without Fortran

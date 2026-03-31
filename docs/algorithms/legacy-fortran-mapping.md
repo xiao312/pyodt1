@@ -24,8 +24,13 @@ Primary upstream reference:
 | `BTriplet.f` | `pyodt1.triplet.triplet_map()` |
 | `BAddK.f` | `pyodt1.triplet.add_k()` |
 | `BEddy.f` | `pyodt1.solver.OdtSolver.apply_eddy()` |
+| `BSetOld.f` | `pyodt1.statistics.save_old_values()` |
+| `BChange.f` | `pyodt1.statistics.accumulate_change()` |
 | `BStats.f` | `pyodt1.statistics.accumulate_cstats()` |
 | `BSeries.f` | `pyodt1.statistics.accumulate_series()` |
+| `BSnap.f` | `pyodt1.statistics.compute_snap_outputs()`, `pyodt1.statistics.write_snap_intercomparison()`, `pyodt1.statistics.write_snap_xmgrace()` |
+| `BRecord.f` | `pyodt1.statistics.brecord_text()` |
+| `XRecord.f` | `pyodt1.statistics.xrecord_text()` |
 | `BWriteSeries.f` | `pyodt1.statistics.finalize_series_variance()`, `pyodt1.statistics.write_series_text()` |
 | `BLowerdt.f` | `pyodt1.solver.OdtSolver.lower_dt()` |
 | `BRaisedt.f` | `pyodt1.solver.OdtSolver.raise_dt()` |

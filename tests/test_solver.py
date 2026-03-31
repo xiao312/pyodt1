@@ -1,5 +1,6 @@
 import numpy as np
 
+from pyodt1.advance import compute_initial_dt, compute_td
 from pyodt1.config import OdtConfig
 from pyodt1.eddy_sampling import bs_kd
 from pyodt1.rng import OdtRNG
@@ -68,3 +69,24 @@ def test_triplet_then_addk_pipeline_runs():
     mapped = triplet_map(arr, 3, 6)
     shifted = add_k(mapped, 3, 6, 0.1)
     assert shifted.shape == arr.shape
+
+
+def test_solver_run_realization_advances_to_target_time():
+    cfg = _dummy_config(18)
+    cfg.visc = 1.0e-5
+    cfg.tend = 5.0e-4
+    cfg.rpars[1] = 0.2
+    cfg.rpars[2] = 1.5
+    cfg.rpars[3] = 0.5
+    cfg.rpars[4] = 0.5
+    cfg.rpars[5] = -1.0
+    cfg.nrpars = 6
+    cfg.ipars[1] = 2
+    cfg.nipars = 6
+    state = OdtState(np.linspace(0.0, 1.0, 18), np.zeros(18), np.zeros(18))
+    solver = OdtSolver(cfg, state, OdtRNG(seed_index=1))
+    result = solver.run_realization(tend=cfg.tend, dt=compute_initial_dt(cfg), td=compute_td(compute_initial_dt(cfg), cfg), max_trials=5)
+    assert result.physical_time == cfg.tend
+    assert result.state.time == cfg.tend
+    assert result.trial_count <= 5
+    assert result.accepted_count + result.rejected_count == result.trial_count

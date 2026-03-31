@@ -59,6 +59,9 @@ Use these to validate Python ports against the original `odt1` Fortran:
 source .venv/bin/activate
 python scripts/compare_one_step.py
 python scripts/compare_advance.py
+python scripts/compare_multi_trial.py
 ```
 
-The first covers the core sampled/accepted eddy path. The second covers deterministic advancement, initialization, and exponential waiting-time sampling.
+- `compare_one_step.py` covers the core sampled/accepted eddy path.
+- `compare_advance.py` covers deterministic advancement, initialization, and exponential waiting-time sampling.
+- `compare_multi_trial.py` covers `BLowerdt` and a reduced multi-trial `Bodt`-style scheduled realization.

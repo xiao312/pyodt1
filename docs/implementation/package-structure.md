@@ -22,4 +22,4 @@ src/pyodt1/
 - `acceptance.py` — acceptance probability
 - `triplet.py` — triplet map and `c*K` increment
 - `state.py` — state container
-- `solver.py` — one-step sampling, accepted-eddy application, and an initial realization runner
+- `solver.py` — one-step sampling, accepted-eddy application, `BLowerdt` / `BRaisedt` logic, and realization runners including `nstat` / `ntseg` scheduling

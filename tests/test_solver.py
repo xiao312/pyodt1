@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from pyodt1.advance import compute_initial_dt, compute_td
 from pyodt1.config import OdtConfig
@@ -86,7 +87,47 @@ def test_solver_run_realization_advances_to_target_time():
     state = OdtState(np.linspace(0.0, 1.0, 18), np.zeros(18), np.zeros(18))
     solver = OdtSolver(cfg, state, OdtRNG(seed_index=1))
     result = solver.run_realization(tend=cfg.tend, dt=compute_initial_dt(cfg), td=compute_td(compute_initial_dt(cfg), cfg), max_trials=5)
-    assert result.physical_time == cfg.tend
-    assert result.state.time == cfg.tend
+    assert result.physical_time == pytest.approx(cfg.tend)
+    assert result.state.time == pytest.approx(cfg.tend)
     assert result.trial_count <= 5
     assert result.accepted_count + result.rejected_count == result.trial_count
+
+
+def test_lower_dt_matches_expected_capping_and_accumulation():
+    cfg = _dummy_config(18)
+    cfg.rpars[0] = 0.4
+    cfg.rpars[3] = 0.5
+    cfg.nrpars = 4
+    state = OdtState(np.zeros(18), np.zeros(18), np.zeros(18))
+    solver = OdtSolver(cfg, state, OdtRNG(seed_index=1))
+    solver.pa = 0.1
+    solver.np_nonzero = 1
+    sample = solver.lower_dt(0.1, 0.05, type("S", (), {"m": 1, "l": 6, "l3": 2, "acceptance_probability": 0.8, "u_kernel": 0.0, "v_kernel": 0.0, "w_kernel": 0.0})())
+    lowered, dt, td = sample
+    assert lowered.acceptance_probability == 0.4
+    assert dt == pytest.approx(0.05)
+    assert td == pytest.approx(0.025)
+    assert solver.pa == 0.5
+    assert solver.np_nonzero == 2
+
+
+def test_run_scheduled_realization_tracks_subinterval_series():
+    cfg = _dummy_config(18)
+    cfg.visc = 1.0e-5
+    cfg.tend = 6.0e-4
+    cfg.nstat = 2
+    cfg.ntseg = 3
+    cfg.rpars[1] = 0.2
+    cfg.rpars[2] = 1.5
+    cfg.rpars[3] = 0.5
+    cfg.rpars[4] = 0.5
+    cfg.rpars[5] = -1.0
+    cfg.nrpars = 6
+    cfg.ipars[1] = 2
+    cfg.nipars = 6
+    solver = OdtSolver(cfg, OdtState(np.linspace(0.0, 1.0, 18), np.zeros(18), np.zeros(18)), OdtRNG(seed_index=1))
+    result = solver.run_scheduled_realization(max_trials=5)
+    assert result.itime == cfg.nstat * cfg.ntseg
+    assert len(result.centerline_u_sum) == result.itime
+    assert len(result.centerline_u2_sum) == result.itime
+    assert result.physical_time == pytest.approx(cfg.tend)

@@ -4,6 +4,7 @@ The main comparison tools are:
 
 - `scripts/compare_one_step.py`
 - `scripts/compare_advance.py`
+- `scripts/compare_multi_trial.py`
 
 This script is central to the project because it turns the reimplementation effort from a qualitative translation exercise into a quantitative validation workflow.
 
@@ -53,11 +54,22 @@ This is especially valuable because it shows that Python is not merely reproduci
 - `BInitRun`
 - `BInitIter`
 
+## 4. `BLowerdt` and scheduled multi-trial realization behavior
+
+`compare_multi_trial.py` compares Python and Fortran for:
+
+- `BLowerdt`
+- adaptive trial-time bookkeeping across multiple candidate eddies
+- `nstat` / `ntseg` sub-interval scheduling
+- centerline series accumulation via the `BSeries`-style path
+- final state and RNG state after a reduced multi-trial realization
+
 ## Usage
 
 ```bash
 python scripts/compare_one_step.py
 python scripts/compare_advance.py
+python scripts/compare_multi_trial.py
 ```
 
 ## Behavior with and without Fortran

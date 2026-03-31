@@ -70,4 +70,4 @@ python scripts/compare_postprocessing.py
 - `compare_iterations.py` covers repeated realizations plus simplified `BStats` / `BSeries` / `BWriteSeries`-style behavior.
 - `compare_postprocessing.py` covers `BSetOld`, `BChange`, direct `XRecord`, and `BSnap` xmgrace-style outputs.
 
-Current caveat: the standalone original Fortran `BRecord.f` routine segfaults under the local `gfortran` toolchain in this environment, even in a minimal positive-`N` reproducer. `BRecord` is implemented in Python but not yet direct-runtime validated here. See `scripts/investigate_brecord.py`.
+BRecord note: the original Fortran routine mutates `N` (`N=abs(N)`), so calling it with a literal such as `call BRecord(61,3,s)` segfaults under the local toolchain because the routine writes through a by-reference constant argument. Calling it with an integer variable works, and `BRecord` is now direct-runtime validated that way. See `scripts/investigate_brecord.py`.

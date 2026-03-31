@@ -11,6 +11,7 @@ When implementing or modifying any Python functionality intended to reproduce le
 3. If a new piece is only ported-from-source but not yet cross-checked, state that explicitly.
 4. Prefer adding or extending reproducible comparison harnesses under `scripts/`.
 5. If the original Fortran routine crashes under the available toolchain, document that explicitly, add a minimal reproducer when possible, and do not over-claim validation.
+6. Check whether a crash is due to an invalid call pattern before concluding the routine itself is incompatible (for example, passing a literal to a routine that mutates a by-reference argument).
 
 ## Current comparison harnesses
 

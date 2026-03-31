@@ -82,10 +82,11 @@ This is especially valuable because it shows that Python is not merely reproduci
 
 - `BSetOld`
 - `BChange`
+- direct `BRecord`
 - direct `XRecord` formatting
 - `BSnap` xmgrace-style output products (`A1`–`H1`, `I1`) on a controlled fixture
 
-Note: the standalone `BRecord` routine in this environment segfaults under the local `gfortran` toolchain even in a minimal positive-`N` reproducer, so `BRecord` itself is implemented in Python but not currently direct-runtime validated here. See `scripts/investigate_brecord.py`.
+`investigate_brecord.py` documents the compatibility pitfall: `BRecord` mutates `N`, so calling it with a literal constant can segfault under pass-by-reference semantics. Calling it with an integer variable works and matches the Python implementation.
 
 ## Usage
 

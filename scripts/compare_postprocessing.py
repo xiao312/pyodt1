@@ -11,9 +11,11 @@ import numpy as np
 from pyodt1.state import OdtState
 from pyodt1.statistics import (
     accumulate_change,
+    brecord_text,
     compute_snap_outputs,
     initialize_eddy_statistics,
     save_old_values,
+    write_snap_intercomparison,
     write_snap_xmgrace,
     xrecord_text,
 )
@@ -31,6 +33,7 @@ def python_reference(tmp: Path) -> dict:
     after.v[1:4] += 2.0
     accumulate_change(eddy, after, 2, 3, 1, 0)
 
+    btext = brecord_text(3, np.array([1.0, 0.0, 2.5]))
     xtext = xrecord_text(3, np.array([0.1, 0.2, 0.3]), np.array([1.0, 0.0, 2.5]))
 
     n = 6
@@ -53,12 +56,14 @@ def python_reference(tmp: Path) -> dict:
     snap = compute_snap_outputs(n, np.zeros(n), np.zeros(n), np.zeros(n), 1.0, 1.0e-5, 1, edstat, cstat)
     py_snap_dir = tmp / "py_snap"
     py_snap_dir.mkdir()
+    write_snap_intercomparison(py_snap_dir, 1, snap)
     write_snap_xmgrace(py_snap_dir, 1, snap)
 
     return {
         "python": {
             "old": eddy.old.tolist(),
             "edstat": eddy.edstat.tolist(),
+            "brecord": btext,
             "xrecord": xtext,
             "snap_files": {
                 name: (py_snap_dir / name).read_text(encoding="utf-8")
@@ -78,7 +83,7 @@ def write_direct_driver(workdir: Path) -> None:
       program driver_direct
       implicit none
       integer, parameter :: N=8, NVAL=8
-      integer j,k,m
+      integer j,k,m,n3
       double precision u(N),v(N),w(N),old(NVAL,3),ed1(NVAL,4,4,1)
       double precision s3(3), x3(3)
       open(10,file='fixture_direct.dat',status='old')
@@ -117,6 +122,10 @@ def write_direct_driver(workdir: Path) -> None:
       x3(1)=0.1d0
       x3(2)=0.2d0
       x3(3)=0.3d0
+      n3=3
+      open(61,file='brecord.dat',status='unknown')
+      call BRecord(61,n3,s3)
+      close(61)
       open(62,file='xrecord.dat',status='unknown')
       call XRecord(62,3,x3,s3)
       close(62)
@@ -222,7 +231,7 @@ def main() -> int:
         compile_and_run(
             direct_dir,
             "direct.exe",
-            [ODT1_SRC / "BSetOld.f", ODT1_SRC / "BChange.f", ODT1_SRC / "XRecord.f", direct_dir / "driver_direct.f90"],
+            [ODT1_SRC / "BSetOld.f", ODT1_SRC / "BChange.f", ODT1_SRC / "BRecord.f", ODT1_SRC / "XRecord.f", direct_dir / "driver_direct.f90"],
         )
         compile_and_run(
             snap_dir,
@@ -232,6 +241,7 @@ def main() -> int:
         ft = {
             "old": np.loadtxt(direct_dir / "old.dat").tolist(),
             "edstat": np.loadtxt(direct_dir / "edstat.dat").reshape(8, 4, 4).tolist(),
+            "brecord": (direct_dir / "brecord.dat").read_text(encoding="utf-8"),
             "xrecord": (direct_dir / "xrecord.dat").read_text(encoding="utf-8"),
             "snap_files": {name: (snap_dir / name).read_text(encoding="utf-8") for name in ["A1.dat", "B1.dat", "C1.dat", "D1.dat", "E1.dat", "F1.dat", "G1.dat", "H1.dat", "I1.dat"]},
         }
@@ -244,6 +254,7 @@ def main() -> int:
     ft_ed = np.asarray(ft['edstat'], dtype=float)
     print(f"old(active_range): max_abs_diff={max_abs_diff(py_old, ft_old):.6e}")
     print(f"edstat: max_abs_diff={max_abs_diff(py_ed, ft_ed):.6e}")
+    print(f"brecord: max_abs_diff={max_abs_diff(parse_numeric_text(py['brecord']), parse_numeric_text(ft['brecord'])):.6e}")
     print(f"xrecord: max_abs_diff={max_abs_diff(parse_numeric_text(py['xrecord']), parse_numeric_text(ft['xrecord'])):.6e}")
     for name in ["A1.dat", "B1.dat", "C1.dat", "D1.dat", "E1.dat", "F1.dat", "G1.dat", "H1.dat", "I1.dat"]:
         print(f"{name}: max_abs_diff={max_abs_diff(parse_numeric_text(py['snap_files'][name]), parse_numeric_text(ft['snap_files'][name])):.6e}")

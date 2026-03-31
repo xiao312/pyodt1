@@ -50,6 +50,7 @@ The postprocessing/change-statistics comparison shows agreement for:
 
 - `BSetOld`
 - `BChange`
+- direct `BRecord`
 - direct `XRecord`
 - `BSnap` xmgrace-style output products on a controlled fixture
 
@@ -61,4 +62,4 @@ This still does **not** yet imply full equivalence with the original `odt1` solv
 - deterministic advancement and initialization,
 - a reduced but faithful multi-trial realization schedule.
 
-The remaining caveat is the standalone `BRecord` routine: it is implemented in Python, but the original Fortran routine segfaults under the local `gfortran` toolchain in this environment even in a minimal positive-`N` reproducer, so direct runtime validation of `BRecord` itself is still pending. A reproducer is provided in `scripts/investigate_brecord.py`. Aside from that toolchain-specific issue, the broader `BChange` / `BSnap` / `XRecord` postprocessing path is now represented and cross-checked on controlled fixtures.
+`BRecord` compatibility has now been investigated: the crash was caused by passing a literal argument to a routine that mutates `N` via `N=abs(N)`. Under Fortran pass-by-reference semantics, writing through a constant argument can segfault. A minimal reproducer is provided in `scripts/investigate_brecord.py`. When called correctly with an integer variable, `BRecord` runs and matches the Python implementation. The broader `BChange` / `BSnap` / `BRecord` / `XRecord` postprocessing path is now represented and cross-checked on controlled fixtures.

@@ -61,4 +61,4 @@ This still does **not** yet imply full equivalence with the original `odt1` solv
 - deterministic advancement and initialization,
 - a reduced but faithful multi-trial realization schedule.
 
-The remaining caveat is the standalone `BRecord` routine: it is implemented in Python, but the original Fortran routine segfaults under the local `gfortran` toolchain in this environment, so direct runtime validation of `BRecord` itself is still pending. Aside from that toolchain-specific issue, the broader `BChange` / `BSnap` / `XRecord` postprocessing path is now represented and cross-checked on controlled fixtures.
+The remaining caveat is the standalone `BRecord` routine: it is implemented in Python, but the original Fortran routine segfaults under the local `gfortran` toolchain in this environment even in a minimal positive-`N` reproducer, so direct runtime validation of `BRecord` itself is still pending. A reproducer is provided in `scripts/investigate_brecord.py`. Aside from that toolchain-specific issue, the broader `BChange` / `BSnap` / `XRecord` postprocessing path is now represented and cross-checked on controlled fixtures.

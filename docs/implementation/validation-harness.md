@@ -85,7 +85,7 @@ This is especially valuable because it shows that Python is not merely reproduci
 - direct `XRecord` formatting
 - `BSnap` xmgrace-style output products (`A1`–`H1`, `I1`) on a controlled fixture
 
-Note: the standalone `BRecord` routine in this environment segfaults under the local `gfortran` toolchain, so `BRecord` itself is implemented in Python but not currently direct-runtime validated here.
+Note: the standalone `BRecord` routine in this environment segfaults under the local `gfortran` toolchain even in a minimal positive-`N` reproducer, so `BRecord` itself is implemented in Python but not currently direct-runtime validated here. See `scripts/investigate_brecord.py`.
 
 ## Usage
 

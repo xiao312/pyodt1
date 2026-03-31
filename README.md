@@ -50,3 +50,15 @@ sphinx-build -b html docs docs/_build/html
 ```
 
 The site is set up for deployment to GitHub Pages with GitHub Actions.
+
+## Fortran comparison harnesses
+
+Use these to validate Python ports against the original `odt1` Fortran:
+
+```bash
+source .venv/bin/activate
+python scripts/compare_one_step.py
+python scripts/compare_advance.py
+```
+
+The first covers the core sampled/accepted eddy path. The second covers deterministic advancement, initialization, and exponential waiting-time sampling.

@@ -1,8 +1,9 @@
 # Validation harness
 
-The main comparison tool is:
+The main comparison tools are:
 
 - `scripts/compare_one_step.py`
+- `scripts/compare_advance.py`
 
 This script is central to the project because it turns the reimplementation effort from a qualitative translation exercise into a quantitative validation workflow.
 
@@ -32,7 +33,7 @@ This path verifies not only individual scalar quantities like `uk` or `pp`, but 
 
 ## 2. Sampled eddy path
 
-The script also compares the sampling pipeline for a seeded case covering:
+`compare_one_step.py` also compares the sampling pipeline for a seeded case covering:
 
 - `BSeeds`
 - `BLenProb`
@@ -42,10 +43,21 @@ The script also compares the sampling pipeline for a seeded case covering:
 
 This is especially valuable because it shows that Python is not merely reproducing downstream formulas for a hand-selected eddy; it is reproducing the same sampled candidate path.
 
+## 3. Deterministic advancement and initialization path
+
+`compare_advance.py` compares Python and Fortran for:
+
+- `BAdv`
+- `BEqnStep`
+- `BExp`
+- `BInitRun`
+- `BInitIter`
+
 ## Usage
 
 ```bash
 python scripts/compare_one_step.py
+python scripts/compare_advance.py
 ```
 
 ## Behavior with and without Fortran

@@ -1,0 +1,38 @@
+[project]
+name = "pyodt1"
+version = "0.1.0"
+description = "Python reimplementation of the odt1 Basic ODT package"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy",
+  "scipy",
+  "pyyaml",
+  "matplotlib",
+]
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "jupyterlab",
+  "ruff",
+  "mypy",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

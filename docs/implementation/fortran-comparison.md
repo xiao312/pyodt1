@@ -56,6 +56,15 @@ The postprocessing/change-statistics comparison shows agreement for:
 - patched-legacy `BSnap` intercomparison products on a controlled fixture
 - dedicated patched-legacy `BSnap` intercomparison comparison via `scripts/compare_bsnap_intercomparison.py`
 
+The smaller helper/config compatibility comparison shows agreement for:
+
+- `BReadOptions`
+- `BReadPars`
+- `BReadConfig`
+- `BInitStats`
+- `BAddTerm`
+- `BrngGet` / `BrngPut`
+
 ## Scope caveat
 
 This still does **not** yet imply full equivalence with the original `odt1` solver. However, the validated scope now includes:

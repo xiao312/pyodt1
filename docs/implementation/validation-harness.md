@@ -8,6 +8,7 @@ The main comparison tools are:
 - `scripts/compare_iterations.py`
 - `scripts/compare_postprocessing.py`
 - `scripts/compare_bsnap_intercomparison.py`
+- `scripts/compare_legacy_helpers.py`
 
 This script is central to the project because it turns the reimplementation effort from a qualitative translation exercise into a quantitative validation workflow.
 
@@ -90,6 +91,8 @@ This is especially valuable because it shows that Python is not merely reproduci
 
 `compare_bsnap_intercomparison.py` is a dedicated intercomparison-mode comparison for the patched legacy `BSnap` / `BRecord` path.
 
+`compare_legacy_helpers.py` compares smaller helper/config routines including `BReadOptions`, `BReadPars`, `BReadConfig`, `BInitStats`, `BAddTerm`, and `BrngGet` / `BrngPut`.
+
 `investigate_brecord.py` documents the compatibility pitfall: `BRecord` mutates `N`, so calling it with a literal constant can segfault under pass-by-reference semantics. Calling it with an integer variable works and matches the Python implementation.
 
 `investigate_bsnap_intercomparison.py` documents the distinction between the unmodified and patched legacy paths: the original `BSnap` intercomparison mode (`ioptions(1)=0`) still crashes here, while the patched legacy path runs. The crash occurs at the negative-`N` header-writing convention used around `BRecord` in the unmodified source.
@@ -107,6 +110,7 @@ python scripts/compare_multi_trial.py
 python scripts/compare_iterations.py
 python scripts/compare_postprocessing.py
 python scripts/compare_bsnap_intercomparison.py
+python scripts/compare_legacy_helpers.py
 ```
 
 ## Behavior with and without Fortran

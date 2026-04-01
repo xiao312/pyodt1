@@ -20,6 +20,7 @@ implementation/package-structure
 implementation/validation-harness
 implementation/fortran-comparison
 implementation/legacy-patches
+implementation/status-matrix
 api/index
 ```
 

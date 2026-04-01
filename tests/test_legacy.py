@@ -32,7 +32,7 @@ def test_b_init_stats_and_b_add_term():
     assert np.allclose(bundle.time_statistics.cstat[:, 2, 1], term)
 
 
-def test_run_legacy_case_writes_legacy_output_bundle(tmp_path):
+def test_run_legacy_case_writes_legacy_output_bundle_xmgrace(tmp_path):
     case_dir = tmp_path / "case"
     case_dir.mkdir()
     (case_dir / "BOptions.dat").write_text("1\n1\n", encoding="utf-8")
@@ -48,6 +48,38 @@ def test_run_legacy_case_writes_legacy_output_bundle(tmp_path):
     out_dir = tmp_path / "out"
     result = run_legacy_case(case_dir, seed_index=1, output_dir=out_dir, max_trials=5)
     assert result.output_dir == out_dir
+    assert result.log_path == out_dir / "fort.11"
     assert (out_dir / "T.dat").exists()
-    for name in ["A1.dat", "B1.dat", "C1.dat", "D1.dat", "E1.dat", "F1.dat", "G1.dat", "H1.dat", "I1.dat", "A2.dat", "H2.dat", "I2.dat"]:
+    assert "iter,istat=" in result.log_path.read_text(encoding="utf-8")
+    for name in [
+        "A1.dat", "B1.dat", "C1.dat", "D1.dat", "E1.dat", "F1.dat", "G1.dat", "H1.dat", "I1.dat",
+        "A2.dat", "E2.dat", "G2.dat", "H2.dat", "I2.dat",
+        "A3.dat", "G4.dat", "H4.dat", "I4.dat",
+    ]:
         assert (out_dir / name).exists()
+
+
+def test_run_legacy_case_writes_intercomparison_file_set(tmp_path):
+    case_dir = tmp_path / "case_inter"
+    case_dir.mkdir()
+    (case_dir / "BOptions.dat").write_text("1\n0\n", encoding="utf-8")
+    (case_dir / "BPars.dat").write_text(
+        "6\n18\n2\n2\n4\n8\n1\n6\n0.4\n0.2\n1.5\n0.5\n2.0e-4\n-1.0\n",
+        encoding="utf-8",
+    )
+    (case_dir / "BConfig.dat").write_text(
+        "1\n2\n2\n4.0e-4\n1.0\n1.0e-5\n0.0\n1.0\n0.0\n",
+        encoding="utf-8",
+    )
+
+    out_dir = tmp_path / "out_inter"
+    result = run_legacy_case(case_dir, seed_index=1, output_dir=out_dir, max_trials=4)
+    assert result.log_path.exists()
+    for name in [
+        "T.dat",
+        "A1.dat", "B1.dat", "C1.dat", "D1.dat",
+        "A2.dat", "B2.dat", "C2.dat", "D2.dat",
+        "A3.dat", "D4.dat", "H1.dat", "H4.dat", "I1.dat", "I4.dat",
+    ]:
+        assert (out_dir / name).exists()
+    assert not (out_dir / "E1.dat").exists()

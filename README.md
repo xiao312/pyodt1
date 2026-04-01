@@ -73,3 +73,5 @@ python scripts/compare_postprocessing.py
 BRecord note: the original Fortran routine mutates `N` (`N=abs(N)`), so calling it with a literal such as `call BRecord(61,3,s)` segfaults under the local toolchain because the routine writes through a by-reference constant argument. Calling it with an integer variable works, and `BRecord` is now direct-runtime validated that way. See `scripts/investigate_brecord.py`.
 
 BSnap note: the original xmgrace path (`ioptions(1)=1`) is direct-runtime validated here. The original intercomparison path (`ioptions(1)=0`) currently segfaults under the local toolchain; see `scripts/investigate_bsnap_intercomparison.py`. For added coverage, `compare_postprocessing.py` also checks a small patched-legacy intercomparison path that preserves the intended output semantics without relying on the crashing in-place negative-`N` convention.
+
+Legacy runner note: `pyodt1.legacy.run_legacy_case()` now provides a legacy-style case runner that reads `BOptions.dat`, `BPars.dat`, and `BConfig.dat`, writes `T.dat`, the expected `A*`–`I*` output bundle for the selected mode, and a `fort.11` progress log.

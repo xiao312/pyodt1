@@ -91,6 +91,8 @@ This is especially valuable because it shows that Python is not merely reproduci
 
 `investigate_bsnap_intercomparison.py` documents a separate local-toolchain caveat: the original `BSnap` intercomparison mode (`ioptions(1)=0`) currently crashes here. The crash occurs at the negative-`N` header-writing convention used around `BRecord`. For regression coverage, `compare_postprocessing.py` also uses a small local patched-legacy intercomparison path that preserves the intended output semantics without mutating `N` in-place.
 
+For day-to-day Python-side regression of full case output production, `pyodt1.legacy.run_legacy_case()` now emits the usual legacy file bundle and `fort.11`, which makes it easier to check orchestration-level behavior without relying on the crashing unmodified legacy intercomparison path.
+
 ## Usage
 
 ```bash

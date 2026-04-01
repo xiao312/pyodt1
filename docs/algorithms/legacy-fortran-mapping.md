@@ -37,6 +37,7 @@ Primary upstream reference:
 | `BrngPut.f` | `pyodt1.rng.OdtRNG.put_state()`, `pyodt1.legacy.brng_put()` |
 | `BInitStats.f` | `pyodt1.legacy.b_init_stats()` |
 | `BAddTerm.f` | `pyodt1.legacy.b_add_term()` |
+| top-level legacy case execution in `Bodt.f` | `pyodt1.legacy.run_legacy_case()` |
 | `BLowerdt.f` | `pyodt1.solver.OdtSolver.lower_dt()` |
 | `BRaisedt.f` | `pyodt1.solver.OdtSolver.raise_dt()` |
 | simple realization scheduling in `Bodt.f` | `pyodt1.solver.OdtSolver.run_realization()` |
@@ -50,5 +51,5 @@ This mapping now covers most of the numerically important `Bodt.f` execution pat
 The main remaining gaps or caveats are:
 
 - top-level legacy file-opening / file-closing orchestration in `Bodt.f` is not mirrored as a single monolithic Python driver
-- top-level legacy file-opening / file-closing orchestration in `Bodt.f` is not mirrored line-for-line, though `pyodt1.legacy.run_legacy_case()` now provides a legacy-style end-to-end case runner that reads a case directory and writes the usual output bundle
+- top-level legacy file-opening / file-closing orchestration in `Bodt.f` is not mirrored line-for-line, though `pyodt1.legacy.run_legacy_case()` now provides a legacy-style end-to-end case runner that reads a case directory, writes the expected legacy file set, and emits `fort.11`
 - direct runtime validation of the original `BSnap` intercomparison (`ioptions(1)=0`) path still hits a local-toolchain crash in the unmodified legacy code, although the Python intercomparison writers/parsers are tested, the xmgrace (`ioptions(1)=1`) `BSnap` path is validated on multiple fixtures, and a patched-legacy intercomparison comparison is available for additional numeric coverage

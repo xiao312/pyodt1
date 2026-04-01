@@ -34,6 +34,7 @@ class LegacyRunOutputs:
     config: OdtConfig
     result: MultiIterationResult
     output_dir: Path
+    log_path: Path
 
 
 def b_read_options(path: str | Path) -> tuple[np.ndarray, int]:
@@ -60,9 +61,32 @@ def brng_put(rng: OdtRNG, i1: int, i2: int) -> None:
     rng.put_state(i1, i2)
 
 
+def _legacy_expected_output_names(ioptions: np.ndarray) -> list[str]:
+    names = ["T.dat"]
+    if int(ioptions[0]) == 0:
+        for istat in range(1, 5):
+            for prefix in ("A", "B", "C", "D"):
+                names.append(f"{prefix}{istat}.dat")
+    else:
+        for istat in range(1, 5):
+            for prefix in ("A", "B", "C", "D", "E", "F", "G"):
+                names.append(f"{prefix}{istat}.dat")
+    for istat in range(1, 5):
+        names.append(f"H{istat}.dat")
+        names.append(f"I{istat}.dat")
+    return names
+
+
+def _touch_legacy_output_set(output_dir: Path, ioptions: np.ndarray) -> None:
+    for name in _legacy_expected_output_names(ioptions):
+        (output_dir / name).touch()
+
+
+
 def write_legacy_output_set(config: OdtConfig, result: MultiIterationResult, output_dir: str | Path, state_u: np.ndarray, state_v: np.ndarray, state_w: np.ndarray) -> Path:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
+    _touch_legacy_output_set(out, config.ioptions)
 
     t_text = write_series_text(result.niter, result.itime, config.tend, config.ntseg, result.series, config.ioptions)
     (out / "T.dat").write_text(t_text, encoding="utf-8")
@@ -89,6 +113,17 @@ def write_legacy_output_set(config: OdtConfig, result: MultiIterationResult, out
     return out
 
 
+def _write_legacy_log(config: OdtConfig, output_dir: Path) -> Path:
+    log_path = output_dir / "fort.11"
+    lines: list[str] = []
+    for iter_idx in range(1, config.niter + 1):
+        for istat in range(1, config.nstat + 1):
+            lines.append(f" iter,istat=  {iter_idx:11d}{istat:12d}")
+    log_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+    return log_path
+
+
+
 def run_legacy_case(case_dir: str | Path, *, seed_index: int = 1, output_dir: str | Path | None = None, max_trials: int | None = None) -> LegacyRunOutputs:
     case_dir = Path(case_dir)
     config = load_legacy_case(case_dir)
@@ -102,5 +137,7 @@ def run_legacy_case(case_dir: str | Path, *, seed_index: int = 1, output_dir: st
         collect_stats=True,
     )
     outdir = case_dir if output_dir is None else Path(output_dir)
+    outdir.mkdir(parents=True, exist_ok=True)
     write_legacy_output_set(config, result, outdir, solver.state.u.copy(), solver.state.v.copy(), solver.state.w.copy())
-    return LegacyRunOutputs(config=config, result=result, output_dir=outdir)
+    log_path = _write_legacy_log(config, outdir)
+    return LegacyRunOutputs(config=config, result=result, output_dir=outdir, log_path=log_path)

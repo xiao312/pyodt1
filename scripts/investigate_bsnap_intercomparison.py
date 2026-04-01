@@ -10,6 +10,26 @@ ROOT = Path(__file__).resolve().parents[1]
 ODT1_SRC = ROOT / "external" / "odt1" / "source1"
 
 
+ORIGINAL_BRECORD = """
+subroutine BRecord(ifile, N, s)
+  implicit none
+  integer :: ifile, N, j, m, num
+  double precision :: s(N), h(N)
+100 format(E15.7)
+200 format(I6)
+  if (N .lt. 0) write(ifile, 200) N
+  N = abs(N)
+  do j = 1, N
+    h(j) = s(j)
+    if (abs(h(j)) .lt. 0.1d0**30) h(j) = 0.d0
+  end do
+  write(ifile, 100) (h(m), m=1, N)
+  call flush(ifile)
+  return
+end
+"""
+
+
 B_RECORD_NEG_DRIVER = """
       program investigate_brecord_negative
       implicit none
@@ -87,19 +107,34 @@ def write_driver(path: Path, mode: int) -> None:
     )
 
 
-def compile_and_run(workdir: Path, mode: int) -> int:
+def write_original_bsnap(path: Path) -> None:
+    text = (ODT1_SRC / "BSnap.f").read_text(encoding="utf-8")
+    text = text.replace("       integer N, i, j, k, ii, istat, ifile, ioptions(100), N1\n       integer NWRITE\n", "       integer N, i, j, k, ii, istat, ifile, ioptions(100), N1\n")
+    text = text.replace("       NWRITE=-N", "       N=-N")
+    text = text.replace("call BRecord(ifile,NWRITE,ht)", "call BRecord(ifile,N,ht)")
+    path.write_text(text, encoding="utf-8")
+
+
+def compile_and_run(workdir: Path, mode: int, *, original: bool) -> int:
     driver = workdir / f"driver_mode_{mode}.f90"
     exe = workdir / f"mode_{mode}.exe"
     write_driver(driver, mode)
+    brecord = ODT1_SRC / "BRecord.f"
+    bsnap = ODT1_SRC / "BSnap.f"
+    if original:
+        brecord = workdir / "BRecord_original.f90"
+        bsnap = workdir / "BSnap_original.f"
+        brecord.write_text(ORIGINAL_BRECORD.strip() + "\n", encoding="utf-8")
+        write_original_bsnap(bsnap)
     cmd = [
         shutil.which("gfortran") or "gfortran",
         "-O0",
         "-std=legacy",
         "-o",
         str(exe),
-        str(ODT1_SRC / "BRecord.f"),
+        str(brecord),
         str(ODT1_SRC / "XRecord.f"),
-        str(ODT1_SRC / "BSnap.f"),
+        str(bsnap),
         str(driver),
     ]
     subprocess.run(cmd, check=True, cwd=workdir)
@@ -114,24 +149,26 @@ def main() -> int:
         return 1
     with tempfile.TemporaryDirectory(prefix="pyodt1-bsnap-") as tmp:
         workdir = Path(tmp)
-        inter_code = compile_and_run(workdir, 0)
-        xmgr_code = compile_and_run(workdir, 1)
+        orig_inter_code = compile_and_run(workdir, 0, original=True)
+        patched_inter_code = compile_and_run(workdir, 0, original=False)
+        patched_xmgr_code = compile_and_run(workdir, 1, original=False)
 
         neg_driver = workdir / "driver_brecord_neg.f90"
         neg_driver.write_text(B_RECORD_NEG_DRIVER.strip() + "\n", encoding="utf-8")
         neg_exe = workdir / "brecord_neg.exe"
         subprocess.run(
-            [gfortran, "-O0", "-std=legacy", "-o", str(neg_exe), str(ODT1_SRC / "BRecord.f"), str(neg_driver)],
+            [gfortran, "-O0", "-std=legacy", "-o", str(neg_exe), str(workdir / "BRecord_original.f90"), str(neg_driver)],
             check=True,
             cwd=workdir,
         )
         neg_result = subprocess.run([str(neg_exe)], cwd=workdir)
 
         print("# BSnap intercomparison investigation")
-        print(f"intercomparison_exit_code={inter_code}")
-        print(f"xmgrace_exit_code={xmgr_code}")
-        print(f"brecord_negative_header_exit_code={int(neg_result.returncode)}")
-        print("The crash is traced to the intercomparison-mode header convention: BSnap calls BRecord with negative N to request a header, and BRecord uses that negative N in automatic array extents before taking abs(N). This is undefined behavior and crashes here for sufficiently large |N|.")
+        print(f"original_intercomparison_exit_code={orig_inter_code}")
+        print(f"patched_intercomparison_exit_code={patched_inter_code}")
+        print(f"patched_xmgrace_exit_code={patched_xmgr_code}")
+        print(f"original_brecord_negative_header_exit_code={int(neg_result.returncode)}")
+        print("The unmodified legacy intercomparison crash is traced to the negative-N header convention: BSnap passes negative N to BRecord, and the original BRecord uses that negative N in automatic array extents before taking abs(N). The patched legacy path avoids mutating N in-place for header signaling and normalizes BRecord loop/storage extents immediately.")
     return 0
 
 

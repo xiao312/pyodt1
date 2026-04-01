@@ -7,6 +7,7 @@ The main comparison tools are:
 - `scripts/compare_multi_trial.py`
 - `scripts/compare_iterations.py`
 - `scripts/compare_postprocessing.py`
+- `scripts/compare_bsnap_intercomparison.py`
 
 This script is central to the project because it turns the reimplementation effort from a qualitative translation exercise into a quantitative validation workflow.
 
@@ -87,9 +88,11 @@ This is especially valuable because it shows that Python is not merely reproduci
 - original `BSnap` xmgrace-style output products on multiple controlled fixtures, including a second `istat` case
 - patched-legacy `BSnap` intercomparison products on a controlled fixture
 
+`compare_bsnap_intercomparison.py` is a dedicated intercomparison-mode comparison for the patched legacy `BSnap` / `BRecord` path.
+
 `investigate_brecord.py` documents the compatibility pitfall: `BRecord` mutates `N`, so calling it with a literal constant can segfault under pass-by-reference semantics. Calling it with an integer variable works and matches the Python implementation.
 
-`investigate_bsnap_intercomparison.py` documents a separate local-toolchain caveat: the original `BSnap` intercomparison mode (`ioptions(1)=0`) currently crashes here. The crash occurs at the negative-`N` header-writing convention used around `BRecord`. For regression coverage, `compare_postprocessing.py` also uses a small local patched-legacy intercomparison path that preserves the intended output semantics without mutating `N` in-place.
+`investigate_bsnap_intercomparison.py` documents the distinction between the unmodified and patched legacy paths: the original `BSnap` intercomparison mode (`ioptions(1)=0`) still crashes here, while the patched legacy path runs. The crash occurs at the negative-`N` header-writing convention used around `BRecord` in the unmodified source.
 
 For day-to-day Python-side regression of full case output production, `pyodt1.legacy.run_legacy_case()` now emits the usual legacy file bundle and `fort.11`, which makes it easier to check orchestration-level behavior without relying on the crashing unmodified legacy intercomparison path.
 
@@ -101,6 +104,7 @@ python scripts/compare_advance.py
 python scripts/compare_multi_trial.py
 python scripts/compare_iterations.py
 python scripts/compare_postprocessing.py
+python scripts/compare_bsnap_intercomparison.py
 ```
 
 ## Behavior with and without Fortran

@@ -62,16 +62,17 @@ python scripts/compare_advance.py
 python scripts/compare_multi_trial.py
 python scripts/compare_iterations.py
 python scripts/compare_postprocessing.py
+python scripts/compare_bsnap_intercomparison.py
 ```
 
 - `compare_one_step.py` covers the core sampled/accepted eddy path.
 - `compare_advance.py` covers deterministic advancement, initialization, and exponential waiting-time sampling.
 - `compare_multi_trial.py` covers `BLowerdt` and a reduced multi-trial `Bodt`-style scheduled realization.
 - `compare_iterations.py` covers repeated realizations plus simplified `BStats` / `BSeries` / `BWriteSeries`-style behavior.
-- `compare_postprocessing.py` covers `BSetOld`, `BChange`, direct `BRecord`, direct `XRecord`, original `BSnap` xmgrace-style outputs on multiple fixtures, and a patched-legacy intercomparison comparison.
+- `compare_postprocessing.py` covers `BSetOld`, `BChange`, direct `BRecord`, direct `XRecord`, patched-legacy `BSnap` intercomparison outputs, and original `BSnap` xmgrace-style outputs on multiple fixtures.
 
 BRecord note: the original Fortran routine mutates `N` (`N=abs(N)`), so calling it with a literal such as `call BRecord(61,3,s)` segfaults under the local toolchain because the routine writes through a by-reference constant argument. Calling it with an integer variable works, and `BRecord` is now direct-runtime validated that way. See `scripts/investigate_brecord.py`.
 
-BSnap note: the original xmgrace path (`ioptions(1)=1`) is direct-runtime validated here. The original intercomparison path (`ioptions(1)=0`) currently segfaults under the local toolchain; see `scripts/investigate_bsnap_intercomparison.py`. For added coverage, `compare_postprocessing.py` also checks a small patched-legacy intercomparison path that preserves the intended output semantics without relying on the crashing in-place negative-`N` convention.
+BSnap note: the **patched legacy** intercomparison path (`ioptions(1)=0`) now runs and is compared numerically against Python. The **original unmodified** intercomparison path still crashes under the local toolchain; see `scripts/investigate_bsnap_intercomparison.py`. The original xmgrace path (`ioptions(1)=1`) is also direct-runtime validated here. A dedicated intercomparison comparison harness is available as `scripts/compare_bsnap_intercomparison.py`.
 
 Legacy runner note: `pyodt1.legacy.run_legacy_case()` now provides a legacy-style case runner that reads `BOptions.dat`, `BPars.dat`, and `BConfig.dat`, writes `T.dat`, the expected `A*`–`I*` output bundle for the selected mode, and a `fort.11` progress log.

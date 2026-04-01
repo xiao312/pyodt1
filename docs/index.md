@@ -19,6 +19,7 @@ algorithms/accepted-eddy-update
 implementation/package-structure
 implementation/validation-harness
 implementation/fortran-comparison
+implementation/legacy-patches
 api/index
 ```
 

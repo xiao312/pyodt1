@@ -96,6 +96,8 @@ This is especially valuable because it shows that Python is not merely reproduci
 
 For day-to-day Python-side regression of full case output production, `pyodt1.legacy.run_legacy_case()` now emits the usual legacy file bundle and `fort.11`, which makes it easier to check orchestration-level behavior without relying on the crashing unmodified legacy intercomparison path.
 
+For the exact source-level changes applied to the vendored Fortran files, see [Legacy source patches](legacy-patches.md).
+
 ## Usage
 
 ```bash

@@ -32,6 +32,11 @@ Primary upstream reference:
 | `BRecord.f` | `pyodt1.statistics.brecord_text()` |
 | `XRecord.f` | `pyodt1.statistics.xrecord_text()` |
 | `BWriteSeries.f` | `pyodt1.statistics.finalize_series_variance()`, `pyodt1.statistics.write_series_text()` |
+| `BReadOptions.f` | `pyodt1.config.read_options()`, `pyodt1.legacy.b_read_options()` |
+| `BrngGet.f` | `pyodt1.rng.OdtRNG.get_state()`, `pyodt1.legacy.brng_get()` |
+| `BrngPut.f` | `pyodt1.rng.OdtRNG.put_state()`, `pyodt1.legacy.brng_put()` |
+| `BInitStats.f` | `pyodt1.legacy.b_init_stats()` |
+| `BAddTerm.f` | `pyodt1.legacy.b_add_term()` |
 | `BLowerdt.f` | `pyodt1.solver.OdtSolver.lower_dt()` |
 | `BRaisedt.f` | `pyodt1.solver.OdtSolver.raise_dt()` |
 | simple realization scheduling in `Bodt.f` | `pyodt1.solver.OdtSolver.run_realization()` |
@@ -45,8 +50,5 @@ This mapping now covers most of the numerically important `Bodt.f` execution pat
 The main remaining gaps or caveats are:
 
 - top-level legacy file-opening / file-closing orchestration in `Bodt.f` is not mirrored as a single monolithic Python driver
-- `BReadOptions.f` is not yet represented as a dedicated Python parser; options are currently handled through already-loaded configuration objects
-- `BrngGet.f` / `BrngPut.f` are not yet exposed as direct Python compatibility helpers
-- `BInitStats.f` is represented structurally by `initialize_series()`, `initialize_time_statistics()`, and `initialize_eddy_statistics()`, but not as a dedicated one-to-one wrapper
-- `BAddTerm.f` remains an internal Fortran helper with no separate Python public wrapper
+- top-level legacy file-opening / file-closing orchestration in `Bodt.f` is not mirrored line-for-line, though `pyodt1.legacy.run_legacy_case()` now provides a legacy-style end-to-end case runner that reads a case directory and writes the usual output bundle
 - direct runtime validation of the original `BSnap` intercomparison (`ioptions(1)=0`) path still hits a local-toolchain crash in the unmodified legacy code, although the Python intercomparison writers/parsers are tested, the xmgrace (`ioptions(1)=1`) `BSnap` path is validated on multiple fixtures, and a patched-legacy intercomparison comparison is available for additional numeric coverage
